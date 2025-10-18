@@ -18,8 +18,8 @@ ArmorDetectorNode::ArmorDetectorNode() : Node("armor_detector_node"), frame_coun
 {
     // Subscribe to the camera publisher topic
     image_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
-        /* TODO: What topic are we subscribing to? What is its name? */, rclcpp::SensorDataQoS(),
-        std::bind(&/* TODO: What method in this class uses the topic message? */, this, std::placeholders::_1));
+        /* TODO: What topic are we subscribing to? What is its name? */"camera/image_raw", rclcpp::SensorDataQoS(),
+        std::bind(&image_callback/* TODO: What method in this class uses the topic message? */, this, std::placeholders::_1));
 
     RCLCPP_INFO(this->get_logger(), "ArmorDetectorNode subscribed to topic");
 }
@@ -106,14 +106,26 @@ std::vector<cv::RotatedRect> ArmorDetectorNode::search(cv::Mat& frame, cv::Scala
     // TODO: Complete the rest of the method. The onboarding instructions document will be very helpful.
 
     // 1) Image Preprocessing
+    cv::Mat copy = frame.clone(); // create copy of frame
+    cv::cvtColor(copy, copy, cv::COLOR_BGR2HSV); // convert mode
+    cv::gaussianBlur(copy, copy, cv::Size(5,5), (5-1) * 0.3 + 0.8, (5-1) * 0.3 + 0.8); // src, dist, kernal size, sdX, sdY
 
     // 2) Color segmentation
+    cv::Mat copy2;
+    cv::inRange(copy, lowerHSV, upperHSV, copy2);
+    cv::inRange(copy, lowerhSV2, upperHSV2, copy);
+    cv::bitwise_or(copy, copy2, copy);
 
     // 2.5) Edge Detection
-    
+    cv::Canny(copy, copy, 100, 200)
+
     // 3) Contour Detection
+    std::vector<cv::Vec4i> dummy;
+    std::vector<std::vector<cv::Point> > contours;
+    cv::findContour(copy, contours, dummy)
 
     // 4) Contour Filtering
+
 
     return {}; // Default return value, no armor found
 }
